@@ -5,5 +5,5 @@ variable "dsc_config" {
 
 variable "dsc_module_path" {
   type    = string
-  default = "https://github.com/RajanikanthGitHub/vmss-dsc-extension/blob/master/dsc/MMAgent.zip"
+  default = "https://rajanikanthsa.blob.core.windows.net/vmss-sa-container/MMAgent.zip"
 }

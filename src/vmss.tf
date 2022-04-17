@@ -41,7 +41,8 @@ resource "azurerm_windows_virtual_machine_scale_set" "main" {
 resource "azurerm_virtual_machine_scale_set_extension" "main" {
   depends_on = [
     azurerm_windows_virtual_machine_scale_set.main,
-    data.azurerm_automation_account.main
+    data.azurerm_automation_account.main,
+    azurerm_storage_account.vmss-sa
   ]
   name                         = "Microsoft.Powershell.DSC"
   virtual_machine_scale_set_id = azurerm_windows_virtual_machine_scale_set.main.id
