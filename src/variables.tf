@@ -1,9 +1,9 @@
 variable "dsc_config" {
-    type = string
-    default = "MMAgent_ngn"  
+  type    = string
+  default = "MMAgent"
 }
 
 variable "dsc_module_path" {
-  type = string
-  default = "F:/Practice/terraform-azure/vmss-dsc-extension/dsc/"
+  type    = string
+  default = "https://github.com/RajanikanthGitHub/vmss-dsc-extension/blob/master/dsc/MMAgent.zip"
 }

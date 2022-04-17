@@ -1,26 +1,13 @@
-resource "azurerm_virtual_network" "main" {
-  name                = "shd-sbx-nrk-uks-vnet"
-  resource_group_name = data.azurerm_resource_group.main.name
-  location            = data.azurerm_resource_group.main.location
-  address_space       = ["10.0.0.0/16"]
-}
-
-resource "azurerm_subnet" "internal" {
-  name                 = "internal"
-  resource_group_name  = data.azurerm_resource_group.main.name
-  virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = ["10.0.2.0/24"]
-}
-
 resource "azurerm_windows_virtual_machine_scale_set" "main" {
   name                 = "shd-sbx-nrk-vmss"
   resource_group_name  = data.azurerm_resource_group.main.name
   location             = data.azurerm_resource_group.main.location
-  sku                  = "Standard_B1s"
-  instances            = 1
+  sku                  = "Standard_DS1_v2"
+  instances            = 2
   admin_password       = "P@55w0rd1234!"
   admin_username       = "adminuser"
   computer_name_prefix = "vmss"
+  overprovision        = false
 
   source_image_reference {
     publisher = "MicrosoftWindowsServer"
@@ -39,16 +26,24 @@ resource "azurerm_windows_virtual_machine_scale_set" "main" {
     primary = true
 
     ip_configuration {
-      name      = "internal"
-      primary   = true
-      subnet_id = azurerm_subnet.internal.id
+      name                                   = "internal"
+      primary                                = true
+      subnet_id                              = azurerm_subnet.internal.id
+      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.vmss_lb_backend_pool.id]
+      load_balancer_inbound_nat_rules_ids    = [azurerm_lb_nat_pool.lbnatpool.id]
+      public_ip_address {
+        name                = "PubicIPAddress"
+        public_ip_prefix_id = azurerm_public_ip_prefix.pip-prefix.id
+      }
     }
   }
 }
 
-resource "azurerm_virtual_machine_scale_set_extension" "example" {
+
+resource "azurerm_virtual_machine_scale_set_extension" "main" {
   depends_on = [
-    azurerm_windows_virtual_machine_scale_set.main
+    azurerm_windows_virtual_machine_scale_set.main,
+    data.azurerm_automation_account.main
   ]
   name                         = "Microsoft.Powershell.DSC"
   virtual_machine_scale_set_id = azurerm_windows_virtual_machine_scale_set.main.id
@@ -59,23 +54,23 @@ resource "azurerm_virtual_machine_scale_set_extension" "example" {
   settings                     = <<SETTINGS
   {
 	"WmfVersion": "latest",
-	"ModulesUrl": "../dsc/MMAgent.zip",
+	"ModulesUrl": "${var.dsc_module_path}",
 	"ConfigurationFunction": "MMAgent.ps1\\MMAgent",
 	"Properties": {
-		"RegistrationKey": {
-			"UserName": "PLACEHOLDER_DONOTUSE",
-			"Password": "PrivateSettingsRef:registrationKeyPrivate"
-		},
-		"RegistrationURL": "${data.azurerm_automation_account.main.endpoint}",
-		"NodeConfigurationName": "${var.dsc_config}",
-		"ConfigurationModeFrequencyMins": 15,
-    "forceUpdateTag": "3",
-		"RefreshFrequencyMins": 30,
-		"RebootNodeIfNeeded": true,
-		"ActionAfterReboot": "continueConfiguration",
-		"AllowModuleOverwrite": true
-	}
-}
+      "RegistrationKey": {
+        "UserName": "PLACEHOLDER_DONOTUSE",
+        "Password": "PrivateSettingsRef:registrationKeyPrivate"
+      },
+      "RegistrationURL": "${data.azurerm_automation_account.main.endpoint}",
+      "NodeConfigurationName": "${var.dsc_config}",
+      "ConfigurationModeFrequencyMins": 15,
+      "forceUpdateTag": "3",
+      "RefreshFrequencyMins": 30,
+      "RebootNodeIfNeeded": true,
+      "ActionAfterReboot": "continueConfiguration",
+      "AllowModuleOverwrite": true
+    }
+  }
   SETTINGS
 
   protected_settings = <<PROTECTED_SETTINGS
