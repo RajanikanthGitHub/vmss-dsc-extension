@@ -3,7 +3,7 @@ resource "azurerm_windows_virtual_machine_scale_set" "main" {
   resource_group_name  = data.azurerm_resource_group.main.name
   location             = data.azurerm_resource_group.main.location
   sku                  = "Standard_DS1_v2"
-  instances            = 2
+  instances            = 1
   admin_password       = "P@55w0rd1234!"
   admin_username       = "adminuser"
   computer_name_prefix = "vmss"
@@ -12,7 +12,7 @@ resource "azurerm_windows_virtual_machine_scale_set" "main" {
   source_image_reference {
     publisher = "MicrosoftWindowsServer"
     offer     = "WindowsServer"
-    sku       = "2016-Datacenter-Server-Core"
+    sku       = "2016-Datacenter"
     version   = "latest"
   }
 
@@ -30,13 +30,11 @@ resource "azurerm_windows_virtual_machine_scale_set" "main" {
       primary                                = true
       subnet_id                              = azurerm_subnet.internal.id
       load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.vmss_lb_backend_pool.id]
-      load_balancer_inbound_nat_rules_ids    = [azurerm_lb_nat_pool.lbnatpool.id]
-      public_ip_address {
-        name                = "PubicIPAddress"
-        public_ip_prefix_id = azurerm_public_ip_prefix.pip-prefix.id
-      }
     }
   }
+  depends_on = [
+    azurerm_virtual_network.main
+  ]
 }
 
 
