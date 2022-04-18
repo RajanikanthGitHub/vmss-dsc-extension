@@ -4,7 +4,7 @@ resource "azurerm_windows_virtual_machine_scale_set" "main" {
   location             = data.azurerm_resource_group.main.location
   sku                  = "Standard_DS1_v2"
   instances            = 1
-  admin_password       = "P@55w0rd1234!"
+  admin_password       = "Srujana_12345678"
   admin_username       = "adminuser"
   computer_name_prefix = "vmss"
   overprovision        = false
@@ -52,23 +52,32 @@ resource "azurerm_virtual_machine_scale_set_extension" "main" {
   auto_upgrade_minor_version   = false
   settings                     = <<SETTINGS
   {
-	"WmfVersion": "latest",
-	"ModulesUrl": "${var.dsc_module_path}",
-	"ConfigurationFunction": "MMAgent.ps1\\MMAgent",
-	"Properties": {
-      "RegistrationKey": {
-        "UserName": "PLACEHOLDER_DONOTUSE",
-        "Password": "PrivateSettingsRef:registrationKeyPrivate"
+    "WmfVersion": "latest",
+    "modulesUrl": "${var.dsc_module_path}",
+    "configurationFunction": "MMAgent.ps1\\MMAgent",      
+    "Properties": [{
+        "Name": "RegistrationKey",
+        "Value": {
+          "UserName": "PLACEHOLDER_DONOTUSE",
+          "Password": "PrivateSettingsRef:registrationKeyPrivate"
+        },
+        "TypeName": "System.Management.Automation.PSCredential"
       },
-      "RegistrationURL": "${data.azurerm_automation_account.main.endpoint}",
-      "NodeConfigurationName": "${var.dsc_config}",
-      "ConfigurationModeFrequencyMins": 15,
-      "forceUpdateTag": "3",
-      "RefreshFrequencyMins": 30,
-      "RebootNodeIfNeeded": true,
-      "ActionAfterReboot": "continueConfiguration",
-      "AllowModuleOverwrite": true
-    }
+      {
+        "Name": "RegistrationUrl",
+        "Value": "${data.azurerm_automation_account.main.endpoint}",
+        "TypeName": "System.String"
+      },
+      {
+        "Name": "NodeConfigurationName",
+        "Value": "${var.dsc_config}",
+        "TypeName": "System.String"
+      },
+      {
+        "Name": "ConfigurationMode",
+        "Value": "${var.dsc_config_mode}",
+        "TypeName": "System.String"
+      }]
   }
   SETTINGS
 

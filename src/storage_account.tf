@@ -26,30 +26,34 @@ resource "azurerm_storage_blob" "vmss-sa-container-blob" {
   ]
 }
 
-# data "azurerm_storage_account_sas" "vmss-random232" {
-#   connection_string = azurerm_storage_account.vmss-sa.primary_connection_string
-#   https_only        = false
-#   resource_types {
-#     service   = false
-#     container = false
-#     object    = true
-#   }
-#   services {
-#     blob  = true
-#     queue = false
-#     table = false
-#     file  = false
-#   }
-#   start  = "2018-03-21"
-#   expiry = "2028-03-21"
-#   permissions {
-#     read    = true
-#     write   = false
-#     delete  = false
-#     list    = false
-#     add     = false
-#     create  = false
-#     update  = false
-#     process = false
-#   }
-# }
+data "azurerm_storage_account_sas" "vmss-sas-main" {
+  connection_string = azurerm_storage_account.vmss-sa.primary_connection_string
+  https_only        = true
+  signed_version    = "2017-07-29"
+  resource_types {
+    service   = true
+    container = false
+    object    = true
+  }
+  services {
+    blob  = true
+    queue = false
+    table = false
+    file  = false
+  }
+  start  = "2022-04-22"
+  expiry = "2024-04-21"
+
+  permissions {
+    read    = true
+    write   = true
+    delete  = false
+    list    = false
+    add     = true
+    create  = true
+    update  = false
+    process = false
+    tag     = false
+    filter  = false
+  }
+}
